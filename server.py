@@ -9,7 +9,11 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from common import HERE, data_path, vapid_keys
 
 PORT = 8765
-SAVED = {"/fcm/token": "fcm-token.txt", "/webpush/subscription": "webpush-subscription.json"}
+SAVED = {
+	"/fcm/token": "fcm-token.txt",
+	"/webpush/subscription": "webpush-subscription.json",
+	"/apns/token": "apns-token.txt",
+}
 
 
 class Handler(SimpleHTTPRequestHandler):

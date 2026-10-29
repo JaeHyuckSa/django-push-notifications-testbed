@@ -7,6 +7,8 @@ dependencies = [
     "Django>=5.2,<5.3",
     "firebase-admin",
     "pywebpush",
+    # same range as django-push-notifications' apns-async extra
+    "aioapns>=3.1,<4.0",
     # only provides package metadata; the code under test comes from --repo
     "django-push-notifications",
 ]

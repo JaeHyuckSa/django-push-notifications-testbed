@@ -1,4 +1,4 @@
-"""Pieces shared by server.py, fcm.py and webpush.py."""
+"""Pieces shared by server.py and the send scripts."""
 
 import base64
 import json
@@ -13,6 +13,15 @@ DEFAULT_REPO = os.environ.get("DPN_REPO", os.path.join(HERE, "..", "django-push-
 def data_path(name):
 	os.makedirs(os.path.join(HERE, "data"), exist_ok=True)
 	return os.path.join(HERE, "data", name)
+
+
+def local_config(name):
+	"""A gitignored JSON config next to this file, or None if it doesn't exist yet."""
+	path = os.path.join(HERE, name)
+	if not os.path.exists(path):
+		return None
+	with open(path) as f:
+		return json.load(f)
 
 
 def vapid_keys():

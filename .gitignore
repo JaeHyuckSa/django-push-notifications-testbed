@@ -3,6 +3,8 @@ __pycache__/
 uv.lock
 data/
 firebase-config.json
-# service account keys belong outside the repo, these catch the usual names
+apns-config.json
+# keys belong outside the repo, these catch the usual names
 *firebase-adminsdk*.json
 service-account*.json
+*.p8

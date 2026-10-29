@@ -2,12 +2,12 @@
 
 Send real push notifications from a [django-push-notifications](https://github.com/jazzband/django-push-notifications) checkout to a real receiver.
 
-| Backend  | Receiver          | Status                |
-| -------- | ----------------- | --------------------- |
-| Web Push | Chrome or Firefox | Ready, no account     |
-| FCM      | Chrome or Firefox | Ready, needs Firebase |
-| APNs     | iOS Simulator     | Planned               |
-| WNS      | Windows app       | Planned               |
+| Backend  | Receiver          | Status                                             |
+| -------- | ----------------- | -------------------------------------------------- |
+| Web Push | Chrome or Firefox | Ready, no account                                  |
+| FCM      | Chrome or Firefox | Ready, needs Firebase                              |
+| APNs     | iOS Simulator     | Needs an Apple developer account, not verified yet |
+| WNS      | Windows app       | Planned                                            |
 
 Unofficial, not part of django-push-notifications.
 
@@ -54,28 +54,42 @@ uv run fcm.py send            # --dry-run to validate only
 uv run fcm.py unsubscribe
 ```
 
+## APNs
+
+The iOS Simulator receives real pushes from the APNs sandbox since Xcode 14, on Apple silicon or T2 Macs. ([release notes](https://developer.apple.com/go/?id=xcode-14-sdk-rn))
+
+Once:
+
+1. Join the [Apple Developer Program](https://developer.apple.com/programs/) and install Xcode.
+2. Create a key with **Apple Push Notifications service (APNs)** enabled (**Certificates, Identifiers & Profiles → Keys**), download the `.p8` file and note its Key ID and your Team ID. Keep the file outside this folder. ([docs](https://developer.apple.com/documentation/usernotifications/establishing-a-token-based-connection-to-apns))
+3. In Xcode, create an iOS **App** project (SwiftUI) signed with your team, replace its Swift files with `ios/DPNTestbedApp.swift`, and add the **Push Notifications** and **Background Modes → Remote notifications** capabilities. ([docs](https://developer.apple.com/documentation/usernotifications/registering-your-app-with-apns))
+4. In the target's **Info** tab, add **App Transport Security Settings → Allows Local Networking = YES**, so the app can reach `localhost:8765`.
+5. Copy `apns-config.example.json` to `apns-config.json` and fill in the key path, Key ID, Team ID and the app's bundle ID.
+
+Each time:
+
+```sh
+uv run server.py    # then run the app on an iOS 16+ Simulator, allow notifications and keep it open
+uv run apns.py send
+```
+
 ## What gets sent
 
-| Case | `webpush.py send`                   | `fcm.py send`                   |
-| ---- | ----------------------------------- | ------------------------------- |
-| A    | Text                                | Topic on the message            |
-| B    | JSON string                         | Topic as `send_message(to=...)` |
-| C    | Dict                                | Condition                       |
-| D    | `ttl=60`                            | Device token                    |
-| E    | Queryset bulk send                  | `device.send_message(to=topic)` |
-| F    | Unknown subscription is deactivated |                                 |
+| Case | `webpush.py send`                   | `fcm.py send`                   | `apns.py send`                  |
+| ---- | ----------------------------------- | ------------------------------- | ------------------------------- |
+| A    | Text                                | Topic on the message            | Text alert                      |
+| B    | JSON string                         | Topic as `send_message(to=...)` | Title and body                  |
+| C    | Dict                                | Condition                       | Badge and sound                 |
+| D    | `ttl=60`                            | Device token                    | `thread_id` and `category`      |
+| E    | Queryset bulk send                  | `device.send_message(to=topic)` | Extra data                      |
+| F    | Unknown subscription is deactivated |                                 | Interruption level              |
+| G    |                                     |                                 | Silent (`content_available`)    |
+| H    |                                     |                                 | Bulk send with a badge callback |
+| I    |                                     |                                 | Unknown token is deactivated    |
 
-Results print in the terminal, and what arrives shows on the page and in `data/received.jsonl`.
+Results print in the terminal, and what arrives shows on the page (or in the app) and in `data/received.jsonl`.
 
-## APNs and WNS (planned)
-
-APNs:
-
-1. [Apple Developer Program](https://developer.apple.com/programs/) membership, an App ID with push enabled and a `.p8` key. ([docs](https://developer.apple.com/documentation/usernotifications/establishing-a-token-based-connection-to-apns))
-2. Xcode. The iOS Simulator receives sandbox pushes since Xcode 14 (Apple silicon or T2 Mac). ([release notes](https://developer.apple.com/go/?id=xcode-14-sdk-rn))
-3. A small iOS app that posts its device token to the receiver. ([docs](https://developer.apple.com/documentation/usernotifications/registering-your-app-with-apns))
-
-WNS:
+## WNS (planned)
 
 1. A [Microsoft developer account](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/open-a-developer-account) and an app in [Partner Center](https://partner.microsoft.com/dashboard), for the Package SID and secret. ([docs](https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/windows-push-notification-services--wns--overview))
 2. Windows 10 or 11 (a VM works).
@@ -90,7 +104,7 @@ uv run webpush.py send --repo ../dpn-3.3.0
 
 ## Notes
 
-- Keys, tokens and received messages are stored in `data/`, which git ignores along with `firebase-config.json`.
+- Keys, tokens and received messages are stored in `data/`, which git ignores along with `firebase-config.json` and `apns-config.json`.
 - Open the pages on `localhost`, browsers only allow push on secure origins.
 - If notifications were blocked, allow them for `localhost:8765` in the site settings and reload.
 - FCM condition messages can take about a minute to arrive, so wait before `fcm.py unsubscribe`.
