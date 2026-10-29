@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Web Push receiver</title>
+<h1>Web Push receiver</h1>
+<p><button id="subscribe">Subscribe</button> Status: <span id="status">not subscribed</span></p>
+<p>Endpoint: <code id="endpoint"></code></p>
+<h2>Received</h2>
+<ul id="received"></ul>
+<script type="module">
+const status = (t) => (document.getElementById("status").textContent = t);
+const b64ToBytes = (s) => Uint8Array.from(
+  atob((s + "=".repeat((4 - s.length % 4) % 4)).replace(/-/g, "+").replace(/_/g, "/")),
+  (c) => c.charCodeAt(0),
+);
+// matches the WebPushDevice.browser choices
+const browser = () => {
+  const ua = navigator.userAgent;
+  if (/Edg\//.test(ua)) return "EDGE";
+  if (/OPR\//.test(ua)) return "OPERA";
+  if (/Firefox\//.test(ua)) return "FIREFOX";
+  if (/Chrome\//.test(ua)) return "CHROME";
+  if (/Safari\//.test(ua)) return "SAFARI";
+  return "CHROME";
+};
+navigator.serviceWorker.addEventListener("message", (e) => {
+  const li = document.createElement("li");
+  li.textContent = e.data.text;
+  document.getElementById("received").appendChild(li);
+});
+const reg = await navigator.serviceWorker.register("sw.js");
+document.getElementById("subscribe").onclick = async () => {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== "granted") return status("notification permission " + permission);
+    const key = await (await fetch("/vapid-public-key")).text();
+    // a subscription made with another VAPID key can't be reused
+    const old = await reg.pushManager.getSubscription();
+    if (old) await old.unsubscribe();
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(key) });
+    document.getElementById("endpoint").textContent = sub.endpoint;
+    await fetch("/webpush/subscription", { method: "POST", body: JSON.stringify({ browser: browser(), ...sub.toJSON() }) });
+    status("ready (" + browser() + ")");
+  } catch (e) {
+    status("error: " + e.message);
+  }
+};
+</script>

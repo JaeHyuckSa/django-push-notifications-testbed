@@ -1,0 +1,15 @@
+[project]
+name = "django-push-notifications-testbed"
+version = "0"
+description = "Send real push notifications from a django-push-notifications checkout to a real receiver"
+requires-python = ">=3.10"
+dependencies = [
+    "Django>=5.2,<5.3",
+    "firebase-admin",
+    "pywebpush",
+    # only provides package metadata; the code under test comes from --repo
+    "django-push-notifications",
+]
+
+[tool.uv]
+package = false

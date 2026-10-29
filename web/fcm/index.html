@@ -1,0 +1,42 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>FCM receiver</title>
+<h1>FCM receiver</h1>
+<p>Status: <span id="status">starting</span></p>
+<p>Token: <code id="token"></code></p>
+<h2>Received</h2>
+<ul id="received"></ul>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
+const status = (t) => (document.getElementById("status").textContent = t);
+const show = (text) => {
+  const li = document.createElement("li");
+  li.textContent = text;
+  document.getElementById("received").appendChild(li);
+};
+try {
+  const res = await fetch("/firebase-config.json");
+  if (!res.ok) throw new Error("copy firebase-config.example.json to firebase-config.json and reload");
+  const { vapidKey, ...config } = await res.json();
+  const messaging = getMessaging(initializeApp(config));
+  onMessage(messaging, (payload) => {
+    const data = payload.data || {};
+    show("foreground " + JSON.stringify(data));
+    fetch("/received", { method: "POST", body: JSON.stringify({ source: "fcm", where: "foreground", data }) });
+  });
+  navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data.fcm) show("background " + JSON.stringify(e.data.fcm.data || {}));
+  });
+  // the service worker can't fetch the config before it initializes, so it gets it in its URL
+  const reg = await navigator.serviceWorker.register("firebase-messaging-sw.js?" + new URLSearchParams(config));
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") throw new Error("notification permission " + permission);
+  const token = await getToken(messaging, { serviceWorkerRegistration: reg, vapidKey });
+  document.getElementById("token").textContent = token;
+  await fetch("/fcm/token", { method: "POST", body: token });
+  status("ready");
+} catch (e) {
+  status("error: " + e.message);
+}
+</script>
