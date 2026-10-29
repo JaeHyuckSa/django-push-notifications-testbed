@@ -26,8 +26,8 @@ def read_token():
 
 
 def topic_subscriptions(method):
-	# Admin SDK subscribe_to_topic() uses the legacy Instance ID API, which
-	# returns PERMISSION_DENIED for web tokens; use the FCM v1 endpoint instead.
+	# Calls the FCM v1 topic subscription endpoint directly, the one firebase-admin
+	# uses since 7.7; older SDK versions went through the Instance ID API instead.
 	import google.auth.transport.requests
 	from google.oauth2 import service_account
 
