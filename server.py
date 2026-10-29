@@ -1,5 +1,6 @@
 """Receiver pages on http://localhost:8765. Tokens, subscriptions and received messages go to data/."""
 
+import argparse
 import json
 import os
 import time
@@ -13,6 +14,7 @@ SAVED = {
 	"/fcm/token": "fcm-token.txt",
 	"/webpush/subscription": "webpush-subscription.json",
 	"/apns/token": "apns-token.txt",
+	"/wns/channel": "wns-channel.txt",
 }
 
 
@@ -52,5 +54,8 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-	print(f"Receiver pages on http://localhost:{PORT} (Ctrl+C to stop)", flush=True)
-	ThreadingHTTPServer(("127.0.0.1", PORT), partial(Handler, directory=os.path.join(HERE, "web"))).serve_forever()
+	parser = argparse.ArgumentParser(description=__doc__)
+	parser.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 to accept a Windows VM for WNS")
+	host = parser.parse_args().host
+	print(f"Receiver pages on http://localhost:{PORT}, listening on {host} (Ctrl+C to stop)", flush=True)
+	ThreadingHTTPServer((host, PORT), partial(Handler, directory=os.path.join(HERE, "web"))).serve_forever()

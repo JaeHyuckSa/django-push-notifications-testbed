@@ -2,12 +2,12 @@
 
 Send real push notifications from a [django-push-notifications](https://github.com/jazzband/django-push-notifications) checkout to a real receiver.
 
-| Backend  | Receiver          | Status                                             |
-| -------- | ----------------- | -------------------------------------------------- |
-| Web Push | Chrome or Firefox | Ready, no account                                  |
-| FCM      | Chrome or Firefox | Ready, needs Firebase                              |
-| APNs     | iOS Simulator     | Needs an Apple developer account, not verified yet |
-| WNS      | Windows app       | Planned                                            |
+| Backend  | Receiver          | Status                                                            |
+| -------- | ----------------- | ----------------------------------------------------------------- |
+| Web Push | Chrome or Firefox | Ready, no account                                                 |
+| FCM      | Chrome or Firefox | Ready, needs Firebase                                             |
+| APNs     | iOS Simulator     | Needs an Apple developer account, not verified yet                |
+| WNS      | Windows app       | Needs a Microsoft developer account and Windows, not verified yet |
 
 Unofficial, not part of django-push-notifications.
 
@@ -73,27 +73,40 @@ uv run server.py    # then run the app on an iOS 16+ Simulator, allow notificati
 uv run apns.py send
 ```
 
+## WNS
+
+django-push-notifications gets its WNS token with a Partner Center app's Package SID and secret, so the app has to come from Partner Center.
+
+Once:
+
+1. Set up Windows 10 or 11 (a VM works) with Visual Studio and its **Universal Windows Platform development** workload.
+2. Open a [Microsoft developer account](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/open-a-developer-account) and reserve an app name in [Partner Center](https://partner.microsoft.com/dashboard).
+3. In Visual Studio, create a **Blank App (Universal Windows)** project, replace `MainPage.xaml.cs` with `windows/MainPage.xaml.cs` and set your Mac's IP address in `Receiver`. In `Package.appxmanifest` → **Capabilities**, enable **Internet (Client)** and **Private Networks (Client & Server)**.
+4. **Project → Publish → Associate App with the Store** and pick the reserved name.
+5. Copy `wns-config.example.json` to `wns-config.json` and fill in the app's Package SID and client secret from Partner Center. ([docs](https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/windows-push-notification-services--wns--overview))
+
+Each time:
+
+```sh
+uv run server.py --host 0.0.0.0   # reachable from Windows; then run the app until it says "ready"
+uv run wns.py send
+```
+
 ## What gets sent
 
-| Case | `webpush.py send`                   | `fcm.py send`                   | `apns.py send`                  |
-| ---- | ----------------------------------- | ------------------------------- | ------------------------------- |
-| A    | Text                                | Topic on the message            | Text alert                      |
-| B    | JSON string                         | Topic as `send_message(to=...)` | Title and body                  |
-| C    | Dict                                | Condition                       | Badge and sound                 |
-| D    | `ttl=60`                            | Device token                    | `thread_id` and `category`      |
-| E    | Queryset bulk send                  | `device.send_message(to=topic)` | Extra data                      |
-| F    | Unknown subscription is deactivated |                                 | Interruption level              |
-| G    |                                     |                                 | Silent (`content_available`)    |
-| H    |                                     |                                 | Bulk send with a badge callback |
-| I    |                                     |                                 | Unknown token is deactivated    |
+| Case | `webpush.py send`                   | `fcm.py send`                   | `apns.py send`                  | `wns.py send`        |
+| ---- | ----------------------------------- | ------------------------------- | ------------------------------- | -------------------- |
+| A    | Text                                | Topic on the message            | Text alert                      | Text toast           |
+| B    | JSON string                         | Topic as `send_message(to=...)` | Title and body                  | Toast with two lines |
+| C    | Dict                                | Condition                       | Badge and sound                 | Badge (`xml_data`)   |
+| D    | `ttl=60`                            | Device token                    | `thread_id` and `category`      | Raw                  |
+| E    | Queryset bulk send                  | `device.send_message(to=topic)` | Extra data                      | Queryset bulk send   |
+| F    | Unknown subscription is deactivated |                                 | Interruption level              | Unknown channel      |
+| G    |                                     |                                 | Silent (`content_available`)    |                      |
+| H    |                                     |                                 | Bulk send with a badge callback |                      |
+| I    |                                     |                                 | Unknown token is deactivated    |                      |
 
 Results print in the terminal, and what arrives shows on the page (or in the app) and in `data/received.jsonl`.
-
-## WNS (planned)
-
-1. A [Microsoft developer account](https://learn.microsoft.com/en-us/windows/apps/publish/partner-center/open-a-developer-account) and an app in [Partner Center](https://partner.microsoft.com/dashboard), for the Package SID and secret. ([docs](https://learn.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/windows-push-notification-services--wns--overview))
-2. Windows 10 or 11 (a VM works).
-3. A packaged Windows app that posts its channel URI to the receiver.
 
 ## Comparing versions
 
@@ -104,7 +117,7 @@ uv run webpush.py send --repo ../dpn-3.3.0
 
 ## Notes
 
-- Keys, tokens and received messages are stored in `data/`, which git ignores along with `firebase-config.json` and `apns-config.json`.
+- Keys, tokens and received messages are stored in `data/`, which git ignores along with `firebase-config.json`, `apns-config.json` and `wns-config.json`.
 - Open the pages on `localhost`, browsers only allow push on secure origins.
 - If notifications were blocked, allow them for `localhost:8765` in the site settings and reload.
 - FCM condition messages can take about a minute to arrive, so wait before `fcm.py unsubscribe`.

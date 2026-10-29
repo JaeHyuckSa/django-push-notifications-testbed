@@ -4,6 +4,7 @@ uv.lock
 data/
 firebase-config.json
 apns-config.json
+wns-config.json
 # keys belong outside the repo, these catch the usual names
 *firebase-adminsdk*.json
 service-account*.json

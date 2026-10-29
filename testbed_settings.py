@@ -19,3 +19,10 @@ if apns:
 		"APNS_TOPIC": apns["bundle_id"],
 		"APNS_USE_SANDBOX": True,
 	})
+
+wns = local_config("wns-config.json")
+if wns:
+	PUSH_NOTIFICATIONS_SETTINGS.update({
+		"WNS_PACKAGE_SECURITY_ID": wns["package_sid"],
+		"WNS_SECRET_KEY": wns["secret"],
+	})
