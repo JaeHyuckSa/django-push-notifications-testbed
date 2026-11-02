@@ -1,6 +1,6 @@
 """Send APNs notifications with a django-push-notifications checkout to the iOS app in the Simulator.
 
-Settings come from apns-config.json. Sends go to the APNs sandbox through the apns-async backend.
+Settings come from config/apns.json. Sends go to the APNs sandbox through the apns-async backend.
 
     python apns.py send [--repo PATH] [--label NAME]
 """
@@ -11,12 +11,12 @@ import os
 import sys
 import warnings
 
-from common import add_checkout_args, data_path, local_config, run_case, setup_django
+from testbed.common import add_checkout_args, data_path, local_config, run_case, setup_django
 
 
 def send(args):
-	if not local_config("apns-config.json"):
-		sys.exit("Copy apns-config.example.json to apns-config.json and fill it in.")
+	if not local_config("apns"):
+		sys.exit("Copy config/apns.example.json to config/apns.json and fill it in.")
 	token_path = data_path("apns-token.txt")
 	if not os.path.exists(token_path):
 		sys.exit("No device token yet: run server.py and start the iOS app in the Simulator.")

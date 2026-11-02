@@ -7,7 +7,7 @@ import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-from common import HERE, data_path, vapid_keys
+from testbed.common import ROOT, config_path, data_path, vapid_keys
 
 PORT = 8765
 SAVED = {
@@ -23,9 +23,9 @@ class Handler(SimpleHTTPRequestHandler):
 		if self.path == "/vapid-public-key":
 			return self.reply(vapid_keys()["public_key"].encode(), "text/plain")
 		if self.path == "/firebase-config.json":
-			path = os.path.join(HERE, "firebase-config.json")
+			path = config_path("firebase")
 			if not os.path.exists(path):
-				return self.send_error(404, "Copy firebase-config.example.json to firebase-config.json")
+				return self.send_error(404, "Copy config/firebase.example.json to config/firebase.json")
 			with open(path, "rb") as f:
 				return self.reply(f.read(), "application/json")
 		super().do_GET()
@@ -58,4 +58,4 @@ if __name__ == "__main__":
 	parser.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 to accept a Windows VM for WNS")
 	host = parser.parse_args().host
 	print(f"Receiver pages on http://localhost:{PORT}, listening on {host} (Ctrl+C to stop)", flush=True)
-	ThreadingHTTPServer((host, PORT), partial(Handler, directory=os.path.join(HERE, "web"))).serve_forever()
+	ThreadingHTTPServer((host, PORT), partial(Handler, directory=os.path.join(ROOT, "receivers", "web"))).serve_forever()

@@ -6,18 +6,22 @@ import os
 import subprocess
 import sys
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_REPO = os.environ.get("DPN_REPO", os.path.join(HERE, "..", "django-push-notifications"))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_REPO = os.environ.get("DPN_REPO", os.path.join(ROOT, "..", "django-push-notifications"))
 
 
 def data_path(name):
-	os.makedirs(os.path.join(HERE, "data"), exist_ok=True)
-	return os.path.join(HERE, "data", name)
+	os.makedirs(os.path.join(ROOT, "data"), exist_ok=True)
+	return os.path.join(ROOT, "data", name)
+
+
+def config_path(name):
+	return os.path.join(ROOT, "config", f"{name}.json")
 
 
 def local_config(name):
-	"""A gitignored JSON config next to this file, or None if it doesn't exist yet."""
-	path = os.path.join(HERE, name)
+	"""config/<name>.json (gitignored), or None if it doesn't exist yet."""
+	path = config_path(name)
 	if not os.path.exists(path):
 		return None
 	with open(path) as f:
@@ -61,8 +65,8 @@ def setup_django(args):
 		sys.exit(f"{repo} is not a django-push-notifications checkout, pass --repo")
 	if not args.label:
 		args.label = git_branch(repo)
-	sys.path[:0] = [repo, HERE]
-	os.environ["DJANGO_SETTINGS_MODULE"] = "testbed_settings"
+	sys.path[:0] = [repo, ROOT]
+	os.environ["DJANGO_SETTINGS_MODULE"] = "testbed.settings"
 	import django
 
 	django.setup()

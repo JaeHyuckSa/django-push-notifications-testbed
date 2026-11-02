@@ -13,7 +13,7 @@ import sys
 import urllib.parse
 import warnings
 
-from common import add_checkout_args, data_path, run_case, setup_django
+from testbed.common import add_checkout_args, data_path, run_case, setup_django
 
 TOPICS = ("news", "sports")
 

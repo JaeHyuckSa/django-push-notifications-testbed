@@ -1,16 +1,16 @@
 # the checkout passed with --repo provides tests.settings
 from tests.settings import *  # noqa: F401,F403
 
-from common import local_config, vapid_keys
+from testbed.common import local_config, vapid_keys
 
 DATABASES = {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}}
-ROOT_URLCONF = "testbed_urls"
+ROOT_URLCONF = "testbed.urls"
 PUSH_NOTIFICATIONS_SETTINGS = {
 	"WP_PRIVATE_KEY": vapid_keys()["private_key"],
 	"WP_CLAIMS": {"sub": "mailto:testbed@example.com"},
 }
 
-apns = local_config("apns-config.json")
+apns = local_config("apns")
 if apns:
 	PUSH_NOTIFICATIONS_SETTINGS.update({
 		"APNS_AUTH_KEY_PATH": apns["key_path"],
@@ -20,7 +20,7 @@ if apns:
 		"APNS_USE_SANDBOX": True,
 	})
 
-wns = local_config("wns-config.json")
+wns = local_config("wns")
 if wns:
 	PUSH_NOTIFICATIONS_SETTINGS.update({
 		"WNS_PACKAGE_SECURITY_ID": wns["package_sid"],

@@ -11,7 +11,7 @@ import os
 import sys
 import warnings
 
-from common import add_checkout_args, data_path, run_case, setup_django
+from testbed.common import add_checkout_args, data_path, run_case, setup_django
 
 
 def send(args):
