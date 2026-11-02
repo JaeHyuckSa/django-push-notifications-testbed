@@ -1,9 +1,4 @@
-"""Send APNs notifications with a django-push-notifications checkout to the iOS app in the Simulator.
-
-Settings come from config/apns.json. Sends go to the APNs sandbox through the apns-async backend.
-
-    uv run scripts/apns.py send [--repo PATH] [--label NAME]
-"""
+"""Send APNs notifications with a django-push-notifications checkout to the iOS app in the Simulator."""
 
 import argparse
 import json
@@ -11,7 +6,7 @@ import os
 import sys
 import warnings
 
-from common import add_checkout_args, data_path, local_config, run_case, setup_django
+from common import add_checkout_args, data_path, local_config, report, run_case, setup_django
 
 
 def send(args):
@@ -21,7 +16,7 @@ def send(args):
 	if not os.path.exists(token_path):
 		sys.exit("No device token yet: run scripts/server.py and start the iOS app in the Simulator.")
 	setup_django(args)
-	# fails right away if aioapns isn't installed, instead of falling back to apns2
+	# fail early without aioapns instead of falling back to apns2
 	import push_notifications.apns_async  # noqa: F401
 	from push_notifications.models import APNSDevice
 
@@ -40,7 +35,7 @@ def send(args):
 	try:
 		from push_notifications.enums import InterruptionLevelType
 	except ImportError:
-		print(f"[{label}] {'F interruption level':32} skipped, not in this checkout")
+		report(label, "F interruption level", "skipped, not in this checkout")
 	else:
 		case("F interruption level", lambda: device.send_message(
 			f"{label}:F", interruption_level=InterruptionLevelType.TIME_SENSITIVE))
@@ -48,16 +43,16 @@ def send(args):
 		None, content_available=True, extra={"marker": f"{label}:G"}))
 	case("H bulk with a badge callback", lambda: APNSDevice.objects.filter(pk=device.pk).send_message(
 		f"{label}:H", badge=lambda token: 7))
-	# a well-formed token APNs doesn't know: should be rejected and deactivate the device
+	# well-formed, but unknown to APNs
 	gone = APNSDevice.objects.create(registration_id="0" * 64)
 	case("I unknown token", lambda: gone.send_message(f"{label}:I"))
 	gone.refresh_from_db()
-	print(f"[{label}] {'I device active afterwards':32} {gone.active}")
+	report(label, "I device active afterwards", gone.active)
 
 
 def main():
 	warnings.simplefilter("ignore")
-	parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+	parser = argparse.ArgumentParser(description=__doc__)
 	sub = parser.add_subparsers(dest="command", required=True)
 	add_checkout_args(sub.add_parser("send"))
 	send(parser.parse_args())

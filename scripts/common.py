@@ -1,7 +1,6 @@
-"""Pieces shared by server.py and the send scripts."""
-
 import base64
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -9,6 +8,13 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 DEFAULT_REPO = os.environ.get("DPN_REPO", os.path.join(ROOT, "..", "django-push-notifications"))
+
+logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%H:%M:%S")
+log = logging.getLogger("testbed")
+log.setLevel(logging.INFO)
+
+# ROOT_URLCONF; the checkout's own points to a missing module
+urlpatterns = []
 
 
 def data_path(name):
@@ -21,7 +27,6 @@ def config_path(name):
 
 
 def local_config(name):
-	"""config/<name>.json (gitignored), or None if it doesn't exist yet."""
 	path = config_path(name)
 	if not os.path.exists(path):
 		return None
@@ -30,7 +35,7 @@ def local_config(name):
 
 
 def vapid_keys():
-	# raw base64url key pair, the format docs/WebPush.rst recommends
+	# base64url key pair, as docs/WebPush.rst recommends
 	path = data_path("vapid.json")
 	if not os.path.exists(path):
 		from cryptography.hazmat.primitives import serialization
@@ -51,6 +56,29 @@ def b64(raw):
 	return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
 
 
+def push_settings():
+	conf = {
+		"WP_PRIVATE_KEY": vapid_keys()["private_key"],
+		"WP_CLAIMS": {"sub": "mailto:testbed@example.com"},
+	}
+	apns = local_config("apns")
+	if apns:
+		conf.update({
+			"APNS_AUTH_KEY_PATH": apns["key_path"],
+			"APNS_AUTH_KEY_ID": apns["key_id"],
+			"APNS_TEAM_ID": apns["team_id"],
+			"APNS_TOPIC": apns["bundle_id"],
+			"APNS_USE_SANDBOX": True,
+		})
+	wns = local_config("wns")
+	if wns:
+		conf.update({
+			"WNS_PACKAGE_SECURITY_ID": wns["package_sid"],
+			"WNS_SECRET_KEY": wns["secret"],
+		})
+	return conf
+
+
 def add_checkout_args(parser):
 	parser.add_argument(
 		"--repo", default=DEFAULT_REPO,
@@ -60,23 +88,30 @@ def add_checkout_args(parser):
 
 
 def setup_django(args):
-	"""Make the checkout's push_notifications importable and set up an in-memory database."""
 	repo = os.path.abspath(args.repo)
 	if not os.path.isdir(os.path.join(repo, "push_notifications")):
 		sys.exit(f"{repo} is not a django-push-notifications checkout, pass --repo")
 	if not args.label:
 		args.label = git_branch(repo)
 	sys.path[:0] = [repo, HERE]
-	os.environ["DJANGO_SETTINGS_MODULE"] = "testbed_settings"
 	import django
+	from django.conf import settings
+	from tests import settings as checkout_settings
 
+	conf = {k: getattr(checkout_settings, k) for k in dir(checkout_settings) if k.isupper()}
+	conf.update({
+		"DATABASES": {"default": {"ENGINE": "django.db.backends.sqlite3", "NAME": ":memory:"}},
+		"ROOT_URLCONF": "common",
+		"PUSH_NOTIFICATIONS_SETTINGS": push_settings(),
+	})
+	settings.configure(**conf)
 	django.setup()
 	from django.core.management import call_command
 
 	call_command("migrate", verbosity=0)
 	import push_notifications
 
-	print(f"testing {os.path.dirname(push_notifications.__file__)}")
+	log.info("testing %s", os.path.dirname(push_notifications.__file__))
 
 
 def git_branch(repo):
@@ -89,9 +124,13 @@ def git_branch(repo):
 		return "test"
 
 
+def report(label, name, out):
+	log.info("[%s] %-32s %s", label, name, out)
+
+
 def run_case(label, name, fn, describe):
 	try:
 		out = describe(fn())
 	except Exception as e:
 		out = f"raised {type(e).__name__}: {str(e)[:70]}"
-	print(f"[{label}] {name:32} {out}", flush=True)
+	report(label, name, out)

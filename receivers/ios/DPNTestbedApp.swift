@@ -1,11 +1,8 @@
-// Receiver for apns.py: registers for remote notifications, posts the device token to
-// server.py and records every notification it gets, like the browser pages do.
-// The Simulator shares the Mac's network, so localhost reaches server.py.
-
 import SwiftUI
 import UIKit
 import UserNotifications
 
+// the Simulator shares the Mac's localhost
 let receiverBase = "http://localhost:8765"
 
 final class Receiver: NSObject, ObservableObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
@@ -37,7 +34,6 @@ final class Receiver: NSObject, ObservableObject, UIApplicationDelegate, UNUserN
         status = "error: \(error.localizedDescription)"
     }
 
-    // notifications that arrive while the app is open
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -47,7 +43,6 @@ final class Receiver: NSObject, ObservableObject, UIApplicationDelegate, UNUserN
         completionHandler([.banner, .list, .sound, .badge])
     }
 
-    // silent pushes (content-available)
     func application(
         _ application: UIApplication,
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
@@ -100,7 +95,7 @@ struct ReceiverView: View {
 
 @main
 struct DPNTestbedApp: App {
-    // SwiftUI puts an ObservableObject app delegate into the environment
+    // also injected as an EnvironmentObject
     @UIApplicationDelegateAdaptor(Receiver.self) var receiver
 
     var body: some Scene {

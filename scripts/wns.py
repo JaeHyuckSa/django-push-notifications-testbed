@@ -1,9 +1,4 @@
-"""Send WNS notifications with a django-push-notifications checkout to the Windows app.
-
-Credentials come from config/wns.json, the channel URI from the app (run scripts/server.py with --host 0.0.0.0).
-
-    uv run scripts/wns.py send [--repo PATH] [--label NAME]
-"""
+"""Send WNS notifications with a django-push-notifications checkout to the Windows app."""
 
 import argparse
 import json
@@ -11,7 +6,7 @@ import os
 import sys
 import warnings
 
-from common import add_checkout_args, data_path, local_config, run_case, setup_django
+from common import add_checkout_args, data_path, local_config, report, run_case, setup_django
 
 
 def send(args):
@@ -38,16 +33,16 @@ def send(args):
 		None, xml_data={"badge": {"attrs": {"value": "7"}}}))
 	case("D raw", lambda: device.send_message(None, raw_data=f"{label}:D"))
 	case("E queryset bulk", lambda: WNSDevice.objects.filter(pk=device.pk).send_message(f"{label}:E"))
-	# same host, a channel WNS doesn't know
+	# same host, unknown channel
 	gone = WNSDevice.objects.create(registration_id=channel.split("?")[0].rsplit("/", 1)[0] + "/testbed-unknown")
 	case("F unknown channel", lambda: gone.send_message(f"{label}:F"))
 	gone.refresh_from_db()
-	print(f"[{label}] {'F device active afterwards':32} {gone.active}")
+	report(label, "F device active afterwards", gone.active)
 
 
 def main():
 	warnings.simplefilter("ignore")
-	parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+	parser = argparse.ArgumentParser(description=__doc__)
 	sub = parser.add_subparsers(dest="command", required=True)
 	add_checkout_args(sub.add_parser("send"))
 	send(parser.parse_args())

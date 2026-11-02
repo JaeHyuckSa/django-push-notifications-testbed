@@ -1,11 +1,4 @@
-"""Send FCM messages with a django-push-notifications checkout to the browser on the receiver page.
-
-Credentials come from GOOGLE_APPLICATION_CREDENTIALS (a Firebase service account key).
-
-    uv run scripts/fcm.py subscribe            # subscribe the browser to the news and sports topics
-    uv run scripts/fcm.py unsubscribe
-    uv run scripts/fcm.py send [--repo PATH] [--label NAME] [--dry-run]
-"""
+"""Send FCM messages with a django-push-notifications checkout to the browser on the receiver page."""
 
 import argparse
 import os
@@ -13,7 +6,7 @@ import sys
 import urllib.parse
 import warnings
 
-from common import add_checkout_args, data_path, run_case, setup_django
+from common import add_checkout_args, data_path, log, report, run_case, setup_django
 
 TOPICS = ("news", "sports")
 
@@ -26,8 +19,6 @@ def read_token():
 
 
 def topic_subscriptions(method):
-	# Calls the FCM v1 topic subscription endpoint directly, the one firebase-admin
-	# uses since 7.7; older SDK versions went through the Instance ID API instead.
 	import google.auth.transport.requests
 	from google.oauth2 import service_account
 
@@ -43,7 +34,7 @@ def topic_subscriptions(method):
 			r = session.post(f"{base}?topic_name={topic}", json={})
 		else:
 			r = session.delete(f"{base}/{topic}")
-		print(f"{method} {topic}: HTTP {r.status_code}")
+		log.info("%s %s: HTTP %s", method, topic, r.status_code)
 
 
 def send(args):
@@ -74,9 +65,8 @@ def send(args):
 	token = read_token()
 	case("D device token", lambda: send_message([token], msg("D"), dry_run=dry_run))
 	if dry_run:
-		# device.send_message() also passes dry_run to dict_to_fcm_message(),
-		# which then returns None, so the model path can't do a dry run
-		print(f"[{label}] {'E device.send_message(to=topic)':32} skipped with --dry-run")
+		# device.send_message() can't dry-run: dict_to_fcm_message() returns None
+		report(label, "E device.send_message(to=topic)", "skipped with --dry-run")
 		return
 	device = GCMDevice.objects.create(registration_id=token, cloud_message_type="FCM")
 	case("E device.send_message(to=topic)", lambda: device.send_message(
@@ -85,7 +75,7 @@ def send(args):
 
 def main():
 	warnings.simplefilter("ignore")
-	parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+	parser = argparse.ArgumentParser(description=__doc__)
 	sub = parser.add_subparsers(dest="command", required=True)
 	sub.add_parser("subscribe")
 	sub.add_parser("unsubscribe")

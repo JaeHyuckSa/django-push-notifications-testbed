@@ -28,7 +28,7 @@ try {
   navigator.serviceWorker.addEventListener("message", (e) => {
     if (e.data.fcm) show("background " + JSON.stringify(e.data.fcm.data || {}));
   });
-  // the service worker can't fetch the config before it initializes, so it gets it in its URL
+  // the service worker gets the config in its URL
   const reg = await navigator.serviceWorker.register("firebase-messaging-sw.js?" + new URLSearchParams(config));
   const permission = await Notification.requestPermission();
   if (permission !== "granted") throw new Error("notification permission " + permission);

@@ -1,6 +1,4 @@
-// Receiver for wns.py: opens a push channel, posts its URI to server.py and records
-// every notification it gets, like the browser pages do. Replaces the MainPage.xaml.cs
-// of a "Blank App (Universal Windows)" project; the UI is built here, the XAML stays as it is.
+// Replaces MainPage.xaml.cs of a Blank App (Universal Windows); keep MainPage.xaml as is.
 
 using System;
 using System.Net.Http;
@@ -14,7 +12,7 @@ namespace DPNTestbed
 {
     public sealed partial class MainPage : Page
     {
-        // server.py on the Mac, started with --host 0.0.0.0. Put the Mac's IP address here.
+        // the Mac's IP address; start scripts/server.py with --host 0.0.0.0
         const string Receiver = "http://192.168.0.10:8765";
 
         readonly HttpClient http = new HttpClient();

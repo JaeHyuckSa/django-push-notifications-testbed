@@ -7,7 +7,7 @@ import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-from common import ROOT, config_path, data_path, vapid_keys
+from common import ROOT, config_path, data_path, log, vapid_keys
 
 PORT = 8765
 SAVED = {
@@ -57,5 +57,5 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description=__doc__)
 	parser.add_argument("--host", default="127.0.0.1", help="use 0.0.0.0 to accept a Windows VM for WNS")
 	host = parser.parse_args().host
-	print(f"Receiver pages on http://localhost:{PORT}, listening on {host} (Ctrl+C to stop)", flush=True)
+	log.info("Receiver pages on http://localhost:%s, listening on %s (Ctrl+C to stop)", PORT, host)
 	ThreadingHTTPServer((host, PORT), partial(Handler, directory=os.path.join(ROOT, "receivers", "web"))).serve_forever()

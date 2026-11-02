@@ -1,4 +1,4 @@
-// the Firebase config comes in the registration URL, see index.html
+// config comes in the registration URL (see index.html)
 importScripts(
   "https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js",
 );
