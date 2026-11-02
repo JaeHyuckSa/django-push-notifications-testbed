@@ -1,8 +1,8 @@
 """Send WNS notifications with a django-push-notifications checkout to the Windows app.
 
-Credentials come from config/wns.json, the channel URI from the app (run server.py with --host 0.0.0.0).
+Credentials come from config/wns.json, the channel URI from the app (run scripts/server.py with --host 0.0.0.0).
 
-    python wns.py send [--repo PATH] [--label NAME]
+    uv run scripts/wns.py send [--repo PATH] [--label NAME]
 """
 
 import argparse
@@ -11,7 +11,7 @@ import os
 import sys
 import warnings
 
-from testbed.common import add_checkout_args, data_path, local_config, run_case, setup_django
+from common import add_checkout_args, data_path, local_config, run_case, setup_django
 
 
 def send(args):
@@ -19,7 +19,7 @@ def send(args):
 		sys.exit("Copy config/wns.example.json to config/wns.json and fill it in.")
 	channel_path = data_path("wns-channel.txt")
 	if not os.path.exists(channel_path):
-		sys.exit("No channel yet: run server.py --host 0.0.0.0 and start the Windows app.")
+		sys.exit("No channel yet: run scripts/server.py --host 0.0.0.0 and start the Windows app.")
 	setup_django(args)
 	from push_notifications.models import WNSDevice
 

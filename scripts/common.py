@@ -6,7 +6,8 @@ import os
 import subprocess
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
 DEFAULT_REPO = os.environ.get("DPN_REPO", os.path.join(ROOT, "..", "django-push-notifications"))
 
 
@@ -65,8 +66,8 @@ def setup_django(args):
 		sys.exit(f"{repo} is not a django-push-notifications checkout, pass --repo")
 	if not args.label:
 		args.label = git_branch(repo)
-	sys.path[:0] = [repo, ROOT]
-	os.environ["DJANGO_SETTINGS_MODULE"] = "testbed.settings"
+	sys.path[:0] = [repo, HERE]
+	os.environ["DJANGO_SETTINGS_MODULE"] = "testbed_settings"
 	import django
 
 	django.setup()

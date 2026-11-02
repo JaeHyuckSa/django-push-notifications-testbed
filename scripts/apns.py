@@ -2,7 +2,7 @@
 
 Settings come from config/apns.json. Sends go to the APNs sandbox through the apns-async backend.
 
-    python apns.py send [--repo PATH] [--label NAME]
+    uv run scripts/apns.py send [--repo PATH] [--label NAME]
 """
 
 import argparse
@@ -11,7 +11,7 @@ import os
 import sys
 import warnings
 
-from testbed.common import add_checkout_args, data_path, local_config, run_case, setup_django
+from common import add_checkout_args, data_path, local_config, run_case, setup_django
 
 
 def send(args):
@@ -19,7 +19,7 @@ def send(args):
 		sys.exit("Copy config/apns.example.json to config/apns.json and fill it in.")
 	token_path = data_path("apns-token.txt")
 	if not os.path.exists(token_path):
-		sys.exit("No device token yet: run server.py and start the iOS app in the Simulator.")
+		sys.exit("No device token yet: run scripts/server.py and start the iOS app in the Simulator.")
 	setup_django(args)
 	# fails right away if aioapns isn't installed, instead of falling back to apns2
 	import push_notifications.apns_async  # noqa: F401

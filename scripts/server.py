@@ -7,7 +7,7 @@ import time
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-from testbed.common import ROOT, config_path, data_path, vapid_keys
+from common import ROOT, config_path, data_path, vapid_keys
 
 PORT = 8765
 SAVED = {

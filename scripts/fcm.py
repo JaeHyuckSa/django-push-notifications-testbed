@@ -2,9 +2,9 @@
 
 Credentials come from GOOGLE_APPLICATION_CREDENTIALS (a Firebase service account key).
 
-    python fcm.py subscribe            # subscribe the browser to the news and sports topics
-    python fcm.py unsubscribe
-    python fcm.py send [--repo PATH] [--label NAME] [--dry-run]
+    uv run scripts/fcm.py subscribe            # subscribe the browser to the news and sports topics
+    uv run scripts/fcm.py unsubscribe
+    uv run scripts/fcm.py send [--repo PATH] [--label NAME] [--dry-run]
 """
 
 import argparse
@@ -13,7 +13,7 @@ import sys
 import urllib.parse
 import warnings
 
-from testbed.common import add_checkout_args, data_path, run_case, setup_django
+from common import add_checkout_args, data_path, run_case, setup_django
 
 TOPICS = ("news", "sports")
 
@@ -21,7 +21,7 @@ TOPICS = ("news", "sports")
 def read_token():
 	path = data_path("fcm-token.txt")
 	if not os.path.exists(path):
-		sys.exit("No FCM token yet: run server.py, open http://localhost:8765/fcm/ and allow notifications.")
+		sys.exit("No FCM token yet: run scripts/server.py, open http://localhost:8765/fcm/ and allow notifications.")
 	return open(path).read().strip()
 
 

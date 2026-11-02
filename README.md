@@ -12,13 +12,10 @@ Send real push notifications from a [django-push-notifications](https://github.c
 Unofficial, not part of django-push-notifications.
 
 ```
-server.py              receiver: serves the pages and stores tokens and received messages
-fcm.py webpush.py      one send script per backend
-apns.py wns.py
-config/                *.example.json templates; your copies next to them are gitignored
-receivers/             web/ (browser pages), ios/ (Simulator app), windows/ (UWP app)
-testbed/               shared code and the Django settings
-data/                  tokens, keys and received messages (gitignored)
+scripts/      server.py (the receiver) and one send script per backend: fcm.py, webpush.py, apns.py, wns.py
+config/       *.example.json templates; your copies next to them are gitignored
+receivers/    web/ (browser pages), ios/ (Simulator app), windows/ (UWP app)
+data/         tokens, keys and received messages (gitignored)
 ```
 
 ## Setup
@@ -35,7 +32,7 @@ data/                  tokens, keys and received messages (gitignored)
 
    ```sh
    cd django-push-notifications-testbed
-   uv run server.py
+   uv run scripts/server.py
    ```
 
 To test another checkout, pass `--repo PATH` or set `DPN_REPO`.
@@ -43,7 +40,7 @@ To test another checkout, pass `--repo PATH` or set `DPN_REPO`.
 ## Web Push
 
 1. Open http://localhost:8765/webpush/, click **Subscribe** and allow notifications.
-2. Run `uv run webpush.py send`.
+2. Run `uv run scripts/webpush.py send`.
 
 ## FCM
 
@@ -58,10 +55,10 @@ Each time:
 
 ```sh
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
-uv run server.py              # then open http://localhost:8765/fcm/ and allow notifications
-uv run fcm.py subscribe
-uv run fcm.py send            # --dry-run to validate only
-uv run fcm.py unsubscribe
+uv run scripts/server.py              # then open http://localhost:8765/fcm/ and allow notifications
+uv run scripts/fcm.py subscribe
+uv run scripts/fcm.py send            # --dry-run to validate only
+uv run scripts/fcm.py unsubscribe
 ```
 
 ## APNs
@@ -79,8 +76,8 @@ Once:
 Each time:
 
 ```sh
-uv run server.py    # then run the app on an iOS 16+ Simulator, allow notifications and keep it open
-uv run apns.py send
+uv run scripts/server.py    # then run the app on an iOS 16+ Simulator, allow notifications and keep it open
+uv run scripts/apns.py send
 ```
 
 ## WNS
@@ -98,8 +95,8 @@ Once:
 Each time:
 
 ```sh
-uv run server.py --host 0.0.0.0   # reachable from Windows; then run the app until it says "ready"
-uv run wns.py send
+uv run scripts/server.py --host 0.0.0.0   # reachable from Windows; then run the app until it says "ready"
+uv run scripts/wns.py send
 ```
 
 ## What gets sent
@@ -122,7 +119,7 @@ Results print in the terminal, and what arrives shows on the page (or in the app
 
 ```sh
 git -C ../django-push-notifications worktree add ../dpn-3.3.0 3.3.0
-uv run webpush.py send --repo ../dpn-3.3.0
+uv run scripts/webpush.py send --repo ../dpn-3.3.0
 ```
 
 ## Notes
@@ -130,7 +127,7 @@ uv run webpush.py send --repo ../dpn-3.3.0
 - Keys, tokens and received messages are stored in `data/`; git ignores it and your `config/*.json` files.
 - Open the pages on `localhost`, browsers only allow push on secure origins.
 - If notifications were blocked, allow them for `localhost:8765` in the site settings and reload.
-- FCM condition messages can take about a minute to arrive, so wait before `fcm.py unsubscribe`.
+- FCM condition messages can take about a minute to arrive, so wait before `scripts/fcm.py unsubscribe`.
 
 ## License
 

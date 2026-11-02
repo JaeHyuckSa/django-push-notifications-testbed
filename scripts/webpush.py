@@ -2,7 +2,7 @@
 
 No account is needed: the VAPID keys are made in data/vapid.json on first use.
 
-    python webpush.py send [--repo PATH] [--label NAME]
+    uv run scripts/webpush.py send [--repo PATH] [--label NAME]
 """
 
 import argparse
@@ -11,13 +11,13 @@ import os
 import sys
 import warnings
 
-from testbed.common import add_checkout_args, data_path, run_case, setup_django
+from common import add_checkout_args, data_path, run_case, setup_django
 
 
 def send(args):
 	path = data_path("webpush-subscription.json")
 	if not os.path.exists(path):
-		sys.exit("No subscription yet: run server.py, open http://localhost:8765/webpush/ and click Subscribe.")
+		sys.exit("No subscription yet: run scripts/server.py, open http://localhost:8765/webpush/ and click Subscribe.")
 	setup_django(args)
 	from push_notifications.models import WebPushDevice
 
