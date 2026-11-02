@@ -6,7 +6,7 @@ Send real push notifications from a [django-push-notifications](https://github.c
 | -------- | ----------------- | ----------------------------------------------------------------- |
 | Web Push | Chrome or Firefox | Ready, no account                                                 |
 | FCM      | Chrome or Firefox | Ready, needs Firebase                                             |
-| APNs     | iOS Simulator     | Needs an Apple developer account, not verified yet                |
+| APNs     | iOS Simulator     | Ready, needs an Apple developer account and Xcode                 |
 | WNS      | Windows app       | Needs a Microsoft developer account and Windows, not verified yet |
 
 Unofficial, not part of django-push-notifications.
@@ -69,14 +69,18 @@ Once:
 
 1. Join the [Apple Developer Program](https://developer.apple.com/programs/) and install Xcode.
 2. Create a key with **Apple Push Notifications service (APNs)** enabled (**Certificates, Identifiers & Profiles → Keys**), download the `.p8` file and note its Key ID and your Team ID. Keep the file outside this folder. ([docs](https://developer.apple.com/documentation/usernotifications/establishing-a-token-based-connection-to-apns))
-3. In Xcode, create an iOS **App** project (SwiftUI) signed with your team, replace its Swift files with `receivers/ios/DPNTestbedApp.swift`, and add the **Push Notifications** and **Background Modes → Remote notifications** capabilities. ([docs](https://developer.apple.com/documentation/usernotifications/registering-your-app-with-apns))
-4. In the target's **Info** tab, add **App Transport Security Settings → Allows Local Networking = YES**, so the app can reach `localhost:8765`.
-5. Copy `config/apns.example.json` to `config/apns.json` and fill in the key path, Key ID, Team ID and the app's bundle ID.
+3. Register an App ID with **Push Notifications** for the bundle ID you'll use (**Certificates, Identifiers & Profiles → Identifiers**).
+4. Copy `config/apns.example.json` to `config/apns.json` and fill in the key path, Key ID, Team ID and bundle ID.
+5. Generate the Xcode project with [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`):
+
+   ```sh
+   DPN_TEAM_ID=<Team ID> DPN_BUNDLE_ID=<bundle ID> xcodegen --spec receivers/ios/project.yml
+   ```
 
 Each time:
 
 ```sh
-uv run scripts/server.py    # then run the app on an iOS 16+ Simulator, allow notifications and keep it open
+uv run scripts/server.py    # then run receivers/ios/DPNTestbed.xcodeproj on an iOS 16+ Simulator, allow notifications and keep it open
 uv run scripts/apns.py send
 ```
 
@@ -128,6 +132,7 @@ uv run scripts/webpush.py send --repo ../dpn-3.3.0
 - Open the pages on `localhost`, browsers only allow push on secure origins.
 - If notifications were blocked, allow them for `localhost:8765` in the site settings and reload.
 - FCM condition messages can take about a minute to arrive, so wait before `scripts/fcm.py unsubscribe`.
+- APNs case G (silent push) doesn't reach the app in the Simulator, even with Apple's recommended headers.
 
 ## License
 
